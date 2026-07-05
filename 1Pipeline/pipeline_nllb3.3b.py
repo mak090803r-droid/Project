@@ -116,9 +116,10 @@ PIPELINE_LANG_TO_NLLB = {
 #  MODEL LOADERS
 # ══════════════════════════════════════════════════════════════════════════════
 def load_ocr_engine():
-    """Load PaddleOCR engine (done once)."""
+    """Load PaddleOCR engine (done once). Uses ONNX Runtime backend for GPU without pybind11 conflicts."""
     from paddleocr import PaddleOCR
-    print("[LOAD] Initializing PaddleOCR engine …")
+    ocr_device = "gpu" if NLLB_DEVICE == "cuda" else "cpu"
+    print(f"[LOAD] Initializing PaddleOCR engine (engine=onnxruntime, device={ocr_device}) …")
     t = time.time()
     ocr = PaddleOCR(
         use_doc_orientation_classify=False,
@@ -126,8 +127,8 @@ def load_ocr_engine():
         text_recognition_model_name="PP-OCRv6_medium_rec",
         use_doc_unwarping=False,
         use_textline_orientation=False,
-        engine="paddle",
-        enable_mkldnn=False,
+        engine="onnxruntime",
+        device=ocr_device,
     )
     print(f"[LOAD] PaddleOCR ready in {time.time()-t:.2f}s")
     return ocr

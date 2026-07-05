@@ -20,6 +20,15 @@ import sys
 import time
 import cv2
 import numpy as np
+import torch
+
+# ── Hardware detection (runs once at import time) ──────────────────────────────
+_DEVICE      = "cuda" if torch.cuda.is_available() else "cpu"
+_PADDLE_DEV  = "gpu"  if torch.cuda.is_available() else "cpu"
+if torch.cuda.is_available():
+    print(f"[INFO] GPU detected: {torch.cuda.get_device_name(0)} — running in CUDA mode")
+else:
+    print("[INFO] No GPU detected — running in CPU mode")
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  IMAGE PREPROCESSING  (from paddleocr for curved pages.py)
@@ -80,9 +89,10 @@ def preprocess_image(img_path: str) -> np.ndarray | None:
 #  MODEL LOADERS
 # ══════════════════════════════════════════════════════════════════════════════
 def load_ocr_engine():
-    """Load PaddleOCR engine (done once)."""
+    """Load PaddleOCR engine (done once). Uses ONNX Runtime backend for GPU without pybind11 conflicts."""
     from paddleocr import PaddleOCR
-    print("[LOAD] Initializing PaddleOCR engine …")
+    ocr_device = "gpu" if torch.cuda.is_available() else "cpu"
+    print(f"[LOAD] Initializing PaddleOCR engine (engine=onnxruntime, device={ocr_device}) …")
     t = time.time()
     ocr = PaddleOCR(
         use_doc_orientation_classify=False,
@@ -90,8 +100,8 @@ def load_ocr_engine():
         text_recognition_model_name="PP-OCRv6_medium_rec",
         use_doc_unwarping=False,
         use_textline_orientation=False,
-        engine="paddle",
-        enable_mkldnn=False,
+        engine="onnxruntime",
+        device=ocr_device,
     )
     print(f"[LOAD] PaddleOCR ready in {time.time()-t:.2f}s")
     return ocr
@@ -119,10 +129,10 @@ def load_translator(language: str):
         "chinese": "Helsinki-NLP/opus-mt-zh-en",
     }
     model_name = model_map[language]
-    print(f"[LOAD] Loading MarianMT model: {model_name} …")
+    print(f"[LOAD] Loading MarianMT model: {model_name} (device={_DEVICE}) …")
     t = time.time()
     tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name).to(_DEVICE)
     print(f"[LOAD] Translator ready in {time.time()-t:.2f}s")
     return tokenizer, model
 
@@ -202,6 +212,7 @@ def run_translation(text: str, tokenizer, model) -> tuple[str, float]:
     print("[STAGE 2] Translating to English …")
     t0 = time.time()
     inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+    inputs = {k: v.to(_DEVICE) for k, v in inputs.items()}
     translated = model.generate(**inputs)
     result = tokenizer.decode(translated[0], skip_special_tokens=True)
     elapsed = time.time() - t0

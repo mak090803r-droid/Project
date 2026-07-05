@@ -163,9 +163,10 @@ PIPELINE_LANG_TO_NLLB = {
 #  MODEL LOADERS
 # ======================================================================
 def load_ocr_engine():
-    """Load PaddleOCR engine (done once)."""
+    """Load PaddleOCR engine (done once). Uses ONNX Runtime backend for GPU without pybind11 conflicts."""
     from paddleocr import PaddleOCR
-    print("[LOAD] Initializing PaddleOCR engine ...")
+    ocr_device = "gpu" if NLLB_DEVICE == "cuda" else "cpu"
+    print(f"[LOAD] Initializing PaddleOCR engine (engine=onnxruntime, device={ocr_device}) ...")
     t   = time.time()
     ocr = PaddleOCR(
         use_doc_orientation_classify=False,
@@ -173,8 +174,8 @@ def load_ocr_engine():
         text_recognition_model_name="PP-OCRv6_medium_rec",
         use_doc_unwarping=False,
         use_textline_orientation=False,
-        engine="paddle",
-        enable_mkldnn=False,
+        engine="onnxruntime",
+        device=ocr_device,
     )
     print(f"[LOAD] PaddleOCR ready in {time.time()-t:.2f}s")
     return ocr
@@ -337,12 +338,27 @@ def run_translation_nllb(text, language, translator, tokenizer):
 
 def run_tts(pipertts_module, text):
     """Speak the text through Piper TTS and wait until playback finishes."""
-    print("[STAGE 3] Speaking ...")
+    print("[STAGE 3] Speaking ... (Press any key in terminal to stop)")
     t0 = time.time()
     pipertts_module.speak(text)
+
+    import msvcrt
+    stopped = False
+    while pipertts_module.is_speaking():
+        if msvcrt.kbhit():
+            while msvcrt.kbhit():
+                msvcrt.getch()
+            pipertts_module.stop()
+            stopped = True
+            break
+        time.sleep(0.05)
+
     pipertts_module.wait_until_done()
     elapsed = time.time() - t0
-    print(f"[STAGE 3] TTS playback finished in {elapsed:.3f}s")
+    if stopped:
+        print(f"[STAGE 3] TTS playback stopped by user after {elapsed:.3f}s")
+    else:
+        print(f"[STAGE 3] TTS playback finished in {elapsed:.3f}s")
     return elapsed
 
 
