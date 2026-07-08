@@ -34,7 +34,7 @@ else:
 #  IMAGE PREPROCESSING  (from paddleocr for curved pages.py)
 # ══════════════════════════════════════════════════════════════════════════════
 PREPROCESS_CONFIG = {
-    "upscale_factor":   1.5,
+    "upscale_factor":   1,
     "clahe_clip":       2,
     "clahe_grid":       8,
     "gamma":            0.7,

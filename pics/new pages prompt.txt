@@ -1,0 +1,9 @@
+Don't use this exact dense technical PDF for Chinese in your 
+live demo — it's genuinely one of the hardest OCR cases possible
+(dense small font + technical jargon + tables)
+
+Use a cleaner, larger-font Chinese sample for the live demo
+Keep this dense technical page as a "stress test" result you 
+can mention in your report — "system handles even dense 
+technical Chinese, though accuracy drops on small dense text, 
+future work includes Chinese-specific fine-tuning"

@@ -1,0 +1,3 @@
+Text-coverage proxy approach — instead of detecting page edges directly, use your existing reliable text-block detection and check whether text blocks exist near all four edges/corners of the frame. If there's a text block very close to the top edge and another very close to the bottom edge and similarly left/right, that's a reasonable proxy signal that the page likely extends across the whole frame without being cut off — without ever trying to detect the physical page boundary itself. This reuses your working, reliable detection instead of adding a fragile new one.
+
+WEB PAGE GUI THAT RUNS ACROSS THE NETWORK
