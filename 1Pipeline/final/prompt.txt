@@ -1,0 +1,11 @@
+What to ask Claude: "I need to implement X feature in my pipeline. Give me the exact algorithmic logic, the mathematical thresholds, the edge cases to watch out for, and a structured breakdown of the steps."
+
+Act as my execution agent. I have already architected the solution for our next feature with a high-reasoning model. 
+
+Here is the exact technical blueprint to implement:
+[PASTE CLAUDE'S BLUEPRINT HERE]
+
+Your task:
+1. Scan my local files to locate where this logic belongs.
+2. Modify the code to match these exact algorithmic specifications.
+3. Execute the script in the terminal to verify there are no syntax errors or socket crashes. Do not stop until the execution logs run cleanly.

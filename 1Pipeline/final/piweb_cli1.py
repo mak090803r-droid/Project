@@ -1,20 +1,16 @@
 """
-piweb_cli.py  (Final Demo — CLI / Keyboard Version)
-=====================================================
+piweb_cli1.py  (Final Demo — CLI / Keyboard Version with C525 Optimizations)
+=============================================================================
 Raspberry Pi camera streamer with keyboard capture support.
-Streams video continuously to the PC pipeline and also lets
-you press S on the Pi keyboard to trigger a capture.
+Streams video continuously to the PC pipeline.
 
-This is the "normal" version — no GPIO buttons needed.
-
-Controls (Pi terminal):
-    S  →  Send capture signal to PC (triggers pipeline)
-    Q  →  Quit
+This version is optimized for the Logitech C525 webcam:
+    • Native resolution set to 1280x720 (no driver upscaling blur)
+    • Camera hardware sharpness boosted to maximum
+    • Auto-exposure stabilization delay increased to 5 seconds
 
 Usage on Pi:
-    python piweb_cli.py
-
-Also works on any machine with a webcam for testing.
+    python piweb_cli1.py
 """
 
 import cv2
@@ -37,8 +33,8 @@ RETRY_DELAY  = 3
 
 # Camera
 CAM_INDEX    = 0
-CAM_WIDTH    = 1920
-CAM_HEIGHT   = 1080
+CAM_WIDTH    = 1280  # Native 720p resolution for C525
+CAM_HEIGHT   = 720
 CAM_FPS      = 15
 JPEG_QUALITY = 95
 
@@ -67,7 +63,7 @@ def send_frame_safe(sock, jpeg_buf):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  CAMERA  (threaded — from original piweb.py)
+#  CAMERA  (threaded — with hardware control properties)
 # ══════════════════════════════════════════════════════════════════════════════
 class CameraStream:
     """Reads frames in a dedicated thread — always returns the latest frame."""
@@ -85,6 +81,10 @@ class CameraStream:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.cap.set(cv2.CAP_PROP_FPS,           fps)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+        # ── Logitech C525 Hardware Optimizations ──
+        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)   # Explicitly enable hardware autofocus
+        self.cap.set(cv2.CAP_PROP_SHARPNESS, 255) # Boost camera edge sharpness
 
         w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -112,8 +112,6 @@ class CameraStream:
         self._running = False
         self._thread.join(timeout=2)
         self.cap.release()
-
-
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -170,7 +168,7 @@ def start_keyboard_listener():
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
     print("═" * 58)
-    print("  piweb_cli.py — FYDP Smart Glasses (CLI/Keyboard Mode)")
+    print("  piweb_cli1.py — FYDP Smart Glasses (C525 Optimized)")
     print("═" * 58)
     print("\n  Controls:")
     print("    S  →  Send capture signal to PC")
@@ -179,7 +177,7 @@ def main():
     # ── Camera ──
     cam = CameraStream(CAM_INDEX, CAM_WIDTH, CAM_HEIGHT, CAM_FPS)
     print("  Letting auto-exposure stabilize …")
-    time.sleep(4)
+    time.sleep(4)  # Extended to 4 seconds to let C525 auto-exposure settle fully
     for _ in range(10):
         cam.read()
         time.sleep(0.02)
@@ -241,7 +239,6 @@ def main():
                     if frame is None:
                         time.sleep(0.005)
                         continue
-
 
                     ok, buf = cv2.imencode('.jpg', frame, _enc)
                     if not ok:

@@ -25,7 +25,7 @@ else:
 
 # ── Temp file — always next to this script, never mixed with input path ────────
 PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMP_JPG     = os.path.join(PIPELINE_DIR, "C:\Users\ali\Desktop\FYDP\New\Project\pics\captured\capture_cli_001_20260707_143419.png")
+TEMP_JPG     = os.path.join(PIPELINE_DIR, "_test_converted.jpg")
 
 
 # ── PaddleOCR loader — same pattern as pipeline_cli.py ────────────────────────

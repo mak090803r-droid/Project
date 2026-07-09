@@ -179,7 +179,7 @@ def main():
     # ── Camera ──
     cam = CameraStream(CAM_INDEX, CAM_WIDTH, CAM_HEIGHT, CAM_FPS)
     print("  Letting auto-exposure stabilize …")
-    time.sleep(2)
+    time.sleep(4)
     for _ in range(10):
         cam.read()
         time.sleep(0.02)
