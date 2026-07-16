@@ -1,0 +1,53 @@
+======================================================================
+RUN          : 10
+TIMESTAMP    : 20260716_141721
+IMAGE FILE   : capture_cli_010_20260716_141719.jpg
+LANGUAGE     : english
+PARAGRAPHS   : 8
+======================================================================
+
+── RAW EXTRACTED TEXT ──
+Elmins inapestion al a Bamala Enargy Factlily à mankangnie leam apsrataa a ytrii enargy stgbn n a aiy płaleaty sesaral fos lrom e neareal Loin Tia slattn éepee é mesdisa reom è reso repsster weatisi lstrumanis rafrigarelian en smergeney sghtng Saiar pansis ersytds masi sl the sdally eneray. ktioum taltaras sevar tna svening damana sna a sempasl dlessi gerieralar is resenved lar lang storma Bscause winiar reada san remain stssss fer aays ts contrsi catinei starss detaried measursmenta lecaty Valiags cuirent lamperature fan spesd. and vibraian are sampied svary Eus fundred maiascenda Oniy compresasd aummarles are ranamitted when tne rado snk becemes availabls, and medical and communicatisns isads always receive priornty During a dust storm on 18 October 2025, solar output fell by thirty-four percent in fifteen minutes Battery-cabinet temperature rose by eight degrees Ceisius, and the inverter fan developed an unusual low- frequency vibration. The controller did not shut down the entire station. It disconnected secondary heaters, reduced selected lighting. started the backup generator. and issued a maintenance warning Diagnostic software identified three plausible faults: debris covering part of the solar array. wear in a fan bearing. and increasing contact resistance at a battery connector These possibilities were ranked, but none was presented as certain because the measurements could be explained by more than one physical condition a When the storm weakened, a technician approached the cabinet while wearing a head-mounted camera and an earpiece. Equipment labels contained model numbers, safety notices. alarm codes, and short repair instructions in several languages The local translation system first checked whether the complete label was visible It rejected frames with a missing edge heavy glare, savere perspective distortion, or poor sharpness in the upper region Four stable frames were required before a photograph was storeg If the target was loe clese, the earplece asked the technician to step backward if the label was eff centre a simple laft or right instruction was played These eues were deliberately Brief so they would not compete with environmental sounds or safety communication Accepted images were processed on a workstation inside the service vehicle Text boxes were arranged in reading order and grouped into paragraphs. The offline translation model passed one region at a time to the speech engine, and a brief tone marked every transition
+
+── PARAGRAPH DETAIL ──
+------------------------------------------------------------
+P1 | lines=1 | conf=0.796 | bbox=(1114, 0, 1724, 67)
+  SOURCE    : Elmins inapestion al a Bamala Enargy Factlily
+  SPOKEN    : Elmins inapestion al a Bamala Enargy Factlily
+------------------------------------------------------------
+P2 | lines=20 | conf=0.846 | bbox=(879, 33, 1868, 570)
+  SOURCE    : à mankangnie leam apsrataa a ytrii enargy stgbn n a aiy płaleaty sesaral fos lrom e neareal Loin Tia slattn éepee é mesdisa reom è reso repsster weatisi lstrumanis rafrigarelian en smergeney sghtng Saiar pansis ersytds masi sl the sdally eneray. ktioum taltaras sevar tna svening damana sna a sempasl dlessi gerieralar is resenved lar lang storma Bscause winiar reada san remain stssss fer aays ts contrsi catinei starss detaried measursmenta lecaty Valiags cuirent lamperature fan spesd. and vibraian are sampied svary Eus fundred maiascenda Oniy compresasd aummarles are ranamitted when tne rado snk becemes availabls, and medical and communicatisns isads always receive priornty During a dust storm on 18 October 2025, solar output fell by thirty-four percent in fifteen minutes Battery-cabinet temperature rose by eight degrees Ceisius, and the inverter fan developed an unusual low- frequency vibration. The controller did not shut down the entire station. It disconnected secondary heaters, reduced selected lighting. started the backup generator. and issued a maintenance warning Diagnostic software identified three plausible faults: debris covering part of the solar array. wear in a fan bearing. and increasing contact resistance at a battery connector These possibilities were ranked, but none was
+  SPOKEN    : à mankangnie leam apsrataa a ytrii enargy stgbn n a aiy płaleaty sesaral fos lrom e neareal Loin Tia slattn éepee é mesdisa reom è reso repsster weatisi lstrumanis rafrigarelian en smergeney sghtng Saiar pansis ersytds masi sl the sdally eneray. ktioum taltaras sevar tna svening damana sna a sempasl dlessi gerieralar is reserved lar lang storma Bscause winiar reada san remain stssss fer aays ts contrsi catinei starss detaried measursmenta lecaty Valiags cuirent lamperature fan spesd. and vibraian are sampled svary Eus fundred maiascenda Oniy compresasd aummarles are ranamitted when tne rado snk becemes availabls, and medical and communicatisns isads always receive priornty During a dust storm on 18 October 2025, solar output fell by thirty-four percent in fifteen minutes Battery-cabinet temperature rose by eight degrees Ceisius, and the inverter fan developed an unusual low- frequency vibration. The controller did not shut down the entire station. It disconnected secondary heaters, reduced selected lighting. started the backup generator. and issued a maintenance warning Diagnostic software identified three plausible faults: debris covering part of the solar array. wear in a fan bearing. and increasing contact resistance at a battery connector These possibilities were ranked, but none was
+  SPELL FIXES: [('resenved', 'reserved'), ('sampied', 'sampled')]
+------------------------------------------------------------
+P3 | lines=1 | conf=0.997 | bbox=(862, 521, 1851, 595)
+  SOURCE    : presented as certain because the measurements could be explained by
+  SPOKEN    : presented as certain because the measurements could be explained by
+------------------------------------------------------------
+P4 | lines=2 | conf=0.657 | bbox=(850, 545, 1335, 618)
+  SOURCE    : more than one physical condition a
+  SPOKEN    : more than one physical condition a
+------------------------------------------------------------
+P5 | lines=8 | conf=0.977 | bbox=(805, 589, 1845, 841)
+  SOURCE    : When the storm weakened, a technician approached the cabinet while wearing a head-mounted camera and an earpiece. Equipment labels contained model numbers, safety notices. alarm codes, and short repair instructions in several languages The local translation system first checked whether the complete label was visible It rejected frames with a missing edge heavy glare, savere perspective distortion, or poor sharpness in the upper region Four stable frames were required before a photograph was storeg If the target was loe clese, the earplece asked
+  SPOKEN    : When the storm weakened, a technician approached the cabinet while wearing a head-mounted camera and an earpiece. Equipment labels contained model numbers, safety notices. alarm codes, and short repair instructions in several languages The local translation system first checked whether the complete label was visible It rejected frames with a missing edge heavy glare, savere perspective distortion, or poor sharpness in the upper region Four stable frames were required before a photograph was storeg If the target was loe clese, the earpiece asked
+  SPELL FIXES: [('earplece', 'earpiece')]
+------------------------------------------------------------
+P6 | lines=1 | conf=0.941 | bbox=(797, 794, 1825, 865)
+  SOURCE    : the technician to step backward if the label was eff centre a simple laft
+  SPOKEN    : the technician to step backward if the label was eff centre a simple laft
+------------------------------------------------------------
+P7 | lines=1 | conf=0.975 | bbox=(788, 820, 1822, 893)
+  SOURCE    : or right instruction was played These eues were deliberately Brief so they
+  SPOKEN    : or right instruction was played These eues were deliberately Brief so they
+------------------------------------------------------------
+P8 | lines=5 | conf=0.994 | bbox=(783, 848, 1811, 1041)
+  SOURCE    : would not compete with environmental sounds or safety communication Accepted images were processed on a workstation inside the service vehicle Text boxes were arranged in reading order and grouped into paragraphs. The offline translation model passed one region at a time to the speech engine, and a brief tone marked every transition
+  SPOKEN    : would not compete with environmental sounds or safety communication Accepted images were processed on a workstation inside the service vehicle Text boxes were arranged in reading order and grouped into paragraphs. The offline translation model passed one region at a time to the speech engine, and a brief tone marked every transition
+
+── SPELL CORRECTIONS SUMMARY ──
+  P2: 'resenved' → 'reserved'
+  P2: 'sampied' → 'sampled'
+  P5: 'earplece' → 'earpiece'
+
+======================================================================

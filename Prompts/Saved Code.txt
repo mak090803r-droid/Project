@@ -1,0 +1,10 @@
+Act as our automated documentation agent. Our master engineering documentation file is located at: `C:\Users\ali\Desktop\FYDP\New\Project\System_Engineering_Documentation.md`.
+
+Your task is to analyze our current terminal history, git diff changes, or modified python scripts since our last save, and append a highly specific engineering entry directly below the `` tag.
+
+In corporate engineering language, document:
+1. WHAT WAS CHANGED: State the files modified, new variable boundaries applied, or processing layers introduced.
+2. HOW IT WAS TESTED: Read our latest console output, execution logs, or evaluation error blocks. Summarize any active accuracy improvements, latency drops (in milliseconds), or parsing stability gains.
+3. CRITICAL ISSUES RESOLVED: Detail any script crashes, memory leaks, packet drops, or OCR hallucinations (e.g., character splits on small fonts) hit during the session, diagnosing the root cause and the exact code modification used to patch it.
+
+Ensure you maintain a clear date stamp for this entry, preserve all existing text in the document, and replace the `` tag at the absolute bottom of the new entry so the file remains updateable next session.

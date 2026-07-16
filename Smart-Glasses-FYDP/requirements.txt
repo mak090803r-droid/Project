@@ -1,0 +1,15 @@
+# Dependencies for Host PC Server (OCR, Translation, TTS)
+torch>=2.0.0
+ctranslate2>=3.0.0
+transformers>=4.30.0
+opencv-python>=4.7.0
+numpy>=1.23.0
+sounddevice>=0.4.6
+onnxruntime-gpu>=1.15.0
+paddleocr>=2.6.1
+
+# Dependencies for Raspberry Pi Client (Video Streaming)
+# opencv-python
+# numpy
+# sounddevice
+# RPi.GPIO

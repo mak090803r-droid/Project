@@ -151,9 +151,7 @@ def preprocess_image(img_path: str):
         print(f"[ERROR] Could not read image: {img_path}")
         return None
     gray     = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # [V6 FIX] GaussianBlur removed — C525 plastic lens is already soft;
-    # blurring on top of it merges thin character strokes and kills OCR on 11-12pt text.
-    # gray     = cv2.GaussianBlur(gray, (3, 3), 0)
+    gray     = cv2.GaussianBlur(gray, (3, 3), 0)
     contrast = _CLAHE_ENGINE.apply(gray)
     enhanced = cv2.LUT(contrast, _GAMMA_LUT)
     if PREPROCESS_CONFIG["sharpen"]:
@@ -528,7 +526,7 @@ QUALITY_THRESHOLD = 50   # score floor (just to reject blurry motion)
 def score_frame_quality(frame):
     """
     Score frame 0-100 based on:
-      - Sharpness  (40 pts) — Laplacian variance (50 to 300 range, raised from 125 ceiling)
+      - Sharpness  (40 pts) — Laplacian variance (25 to 125 range adjusted for C525)
       - Brightness (30 pts) — mean pixel value, ideal 80-180
       - Evenness   (30 pts) — quadrant brightness consistency
 
@@ -538,17 +536,14 @@ def score_frame_quality(frame):
     h, w = gray.shape
 
     # ── Sharpness (40 pts) — Laplacian variance ──
-    # [FIX 1] Raised ceiling from LapVar≥125 to LapVar≥300.
-    # Old range let frames with LapVar=95-200 score 40/40 (fully sharp),
-    # which allowed 7 noticeably soft images through the gate.
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    if laplacian_var < 50:
+    if laplacian_var < 25:
         sharpness_pts = 0
-    elif laplacian_var >= 300:
+    elif laplacian_var >= 125:
         sharpness_pts = 40
     else:
-        # Linear range: 50 → 300 maps to 0 → 40 pts
-        sharpness_pts = int((laplacian_var - 50) / 250 * 40)
+        # Linear range tailored for C525 page capture
+        sharpness_pts = int((laplacian_var - 25) / 100 * 40)
 
     # ── Brightness (30 pts) ──
     mean_brightness = float(np.mean(gray))
@@ -643,9 +638,7 @@ def detect_text_region_size(frame, ocr_engine):
     all_x_min, all_y_min = w_orig, h_orig
     all_x_max, all_y_max = 0, 0
     touching_edges = 0
-    # [FIX 4] Widened edge margin from 12*inv_scale (~36px) to 3.5% of frame width (~67px on 1920p).
-    # This protects the first/last characters of text lines from JPEG chroma artifacts at the crop edge.
-    edge_margin = int(0.035 * w_orig)
+    edge_margin = int(12 * inv_scale)
 
     for poly in boxes_orig:
         x_min, y_min = poly.min(axis=0)
@@ -810,7 +803,7 @@ def pre_capture_quality_loop(frame_holder, ocr_engine, tts_module,
     last_voice_time   = 0.0
     last_detect_time  = 0.0
     voice_cooldown    = 2.2      # seconds between voice guide reminders
-    detect_interval   = 0.8      # [FIX 3] Reduced from 1.5s → 0.8s. Old: 3×1.5=4.5s min hold. New: 3×0.8=2.4s min hold.
+    detect_interval   = 1.5      # seconds between text detection launches
     loop_sleep        = 0.03     # ~30 fps loop update
 
     # Stability hold tracker
@@ -860,17 +853,12 @@ def pre_capture_quality_loop(frame_holder, ocr_engine, tts_module,
 
         # ── 5. Stability & Alignment Gate ──
         page_ok = cached_outer is not None and not cached_outer["touching_edge"]
-
+        
         # Conditions for a good capture:
         #   - Focus is sharp enough (score >= floor)
         #   - We see a full page block (at least 6 text lines)
         #   - The entire page fits on the screen (outer box is GREEN / not touching edges)
-        #   - [FIX 2] Lighting is even across all quadrants (rejects half-shadowed captures)
-        evenness_ok = details["evenness_std"] < 30
-        frame_is_good = (score >= QUALITY_THRESHOLD) and (num_lines >= 6) and page_ok and evenness_ok
-
-        if not evenness_ok and score >= QUALITY_THRESHOLD and page_ok:
-            print(f"  [GATE] Rejected: uneven lighting (QuadStd={details['evenness_std']:.1f} >= 30)")
+        frame_is_good = (score >= QUALITY_THRESHOLD) and (num_lines >= 6) and page_ok
 
         if frame_is_good:
             stability_counter += 1

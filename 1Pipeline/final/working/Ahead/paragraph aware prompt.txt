@@ -1,0 +1,45 @@
+TASK 11 — PARAGRAPH-AWARE SYNCHRONIZED TTS PLAYBACK:
+
+Currently the pipeline translates all OCR text as one block and speaks it as 
+one continuous audio stream. The user has no way to track which paragraph on 
+the physical page is being spoken.
+
+The fix must work as follows:
+
+STEP 1 — PARAGRAPH GROUPING FROM OCR BOUNDING BOXES:
+PaddleOCR already returns per-line bounding boxes with y-coordinates.
+After OCR completes, group detected text lines into paragraphs by vertical 
+gap — lines within 40px of each other vertically belong to the same paragraph, 
+lines separated by more than 40px start a new paragraph.
+Preserve each paragraph as a separate text block with its source y-coordinate 
+range (y_start, y_end).
+
+STEP 2 — TRANSLATE ALL PARAGRAPHS AT ONCE (batch, not sequential):
+Pass all paragraph text blocks to run_translation_nllb() in a single batch 
+call for efficiency. Do not translate one paragraph at a time. The result is 
+an ordered list of translated English paragraph strings matching the original 
+paragraph order.
+
+STEP 3 — SPEAK PARAGRAPH BY PARAGRAPH WITH SYNCHRONIZATION:
+Instead of passing the full joined translation to TTS, loop through the 
+translated paragraph list and for each paragraph:
+  a. Play a short distinct double-beep tone (non-blocking, using _play_tone) 
+     to signal a new paragraph is starting
+  b. Print to console: [READING] Paragraph N/Total (source lines Y_start–Y_end)
+  c. Call tts_module.speak() with only that paragraph's English text
+  d. Wait for that paragraph to finish (tts_module.wait_until_done())
+  e. Insert a 0.5 second pause before the next paragraph
+
+STEP 4 — VISUAL HIGHLIGHT ON PREVIEW WINDOW (optional but preferred):
+While each paragraph is being spoken, draw a CYAN filled semi-transparent 
+rectangle over that paragraph's bounding box region on the last captured 
+frame displayed in the preview window, dimming all other regions slightly.
+Update the overlay as each paragraph advances.
+
+Constraints:
+- Translation efficiency must not be sacrificed — batch translate all paragraphs 
+  in one call, only split the audio output per paragraph
+- The existing key_queue stop mechanism (any key = stop TTS) must still work 
+  and must interrupt mid-paragraph correctly
+- All changes go into pipeline_cli_box3b.py, do not touch pipeline_cli_box3a.py
+- Run python -m py_compile pipeline_cli_box3b.py after changes

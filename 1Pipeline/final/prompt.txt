@@ -1,11 +1,460 @@
-What to ask Claude: "I need to implement X feature in my pipeline. Give me the exact algorithmic logic, the mathematical thresholds, the edge cases to watch out for, and a structured breakdown of the steps."
 
-Act as my execution agent. I have already architected the solution for our next feature with a high-reasoning model. 
 
-Here is the exact technical blueprint to implement:
-[PASTE CLAUDE'S BLUEPRINT HERE]
+---
+
+
+```
+
+You are working on my FYDP (Final Year Design Project): a wearable smart glasses 
+
+system that streams 1080p video from a Logitech C525 camera on a Raspberry Pi to a 
+
+PC host running PaddleOCR PP-OCRv6 (ONNX GPU) → NLLB-200 1.3B translation 
+
+(CTranslate2) → Piper TTS.
+
+
+My main production file is: pipeline_cli_box3a.py
+
+DO NOT modify pipeline_cli_box3a.py.
+
+Create a NEW file: pipeline_cli_box3b.py as a copy of box3a with all your changes.
+
+
+Main code is in "C:\Users\ali\Desktop\FYDP\New\Project\1Pipeline\final\working\Ahead\Further Box AutoCapture"
+
+images u need to check are in "C:\Users\ali\Desktop\FYDP\New\Project\pics\captured"
+
+and for piweb_cli.py if u change it also then for that create a piweb_clia.py dont modify the old one
+
+---
+
+
+CURRENT KNOWN PROBLEM:
+
+The first 4-5 lines of every auto-captured page have significantly more OCR errors 
+
+than the rest. The page top suffers from lens vignetting, shallow depth-of-field on 
+
+a slanted A4 page, and the auto-capture triggers before the frame has fully settled.
+
+
+---
+
+
+TASK 1 — EMPIRICAL PREPROCESSING SWEEP:
+
+Implement and test 5 named preprocessing variants on my captured images at:
+
+C:\Users\ali\Desktop\FYDP\New\Project\pics\captured\
+
+
+Variants to test:
+
+  V_A: Raw grayscale only (baseline, no processing)
+
+  V_B: Current V6 pipeline — Unsharp Mask (σ=1.0, strength=1.5) + CLAHE 
+
+       (clip=2, grid=8x8) + Gamma (γ=0.7), NO blur
+
+  V_C: Sauvola adaptive binarization (window=25, k=0.2) after grayscale — 
+
+       tests whether binarization helps thin-stroke characters
+
+  V_D: Bilateral filter (d=9, σColor=75, σSpace=75) + CLAHE + Gamma — 
+
+       edge-preserving denoise instead of nothing
+
+  V_E: CLAHE (clip=3, grid=4x4) + morphological tophat (kernel 3x3) + Gamma — 
+
+       local contrast boost targeting thin text on grey paper
+
+
+Run PaddleOCR on each variant for every image. Report:
+
+  - Average Laplacian variance (focus metric)
+
+  - Average character count extracted
+
+  - Processing time per image
+
+  - Side-by-side comparison table of all 5 variants
+
+Tell me which variant wins and why, before writing any code into box3b.
+
+
+---   ALSO U HAVE TO ACCESS MY TERMINAL AND STUFF AND KEEP RUNNING MY CODE OR THE RESULTS UR SELF AND KEEP CHECKING THE RESULT AND THEN CONCLUDE THE BEST
+
+
+TASK 2 — FIX THE AUTO-CAPTURE GATE:
+
+In score_frame_quality() and detect_text_region_size(), implement:
+
+  1. Region-of-interest sharpness check: compute Laplacian variance separately 
+
+     for the TOP 30% of the frame (where errors concentrate) and the full frame.
+
+     Reject capture if top-ROI LapVar < 0.7 × full-frame LapVar (top is 
+
+     significantly softer than the rest — common on slanted pages).
+
+  2. Raise temporal stability from 3 consecutive frames to 4 consecutive frames 
+
+     before triggering. The additional 0.8s wait eliminates partial-settle captures.
+
+  3. Add a post-capture quality check: after saving the image, score it. If the 
+
+     top-ROI Laplacian variance < 150, print a warning and optionally skip OCR, 
+
+     replacing it with a TTS beep_failure() and retry signal.
+
+
+---
+
+
+TASK 3 — EXPLICIT CAMERA PROPERTY VERIFICATION:
+
+In piweb_cli.py, after opening the camera, explicitly set and print these 
+
+cv2.CAP_PROP values for the C525:
+
+  - CAP_PROP_AUTOFOCUS = 0 (disable autofocus — fixed-lens camera, this causes 
+
+    driver overhead)
+
+  - CAP_PROP_FOCUS = 0 (set to fixed infinity)
+
+  - CAP_PROP_SHARPNESS = 128 (neutral, not maximum — test this vs. your current 
+
+    maxed-out setting)
+
+  - CAP_PROP_EXPOSURE = -6 (manual exposure, prevents auto-exposure hunting)
+
+  - CAP_PROP_BRIGHTNESS = 128 (neutral)
+
+  - Print the ACTUAL values returned by cap.get() after setting them so I can 
+
+    see what the driver actually accepted.
+
+  - Also print the actual negotiated resolution (CAP_PROP_FRAME_WIDTH / HEIGHT) 
+
+    to confirm we are at native 1920x1080 and not a driver-upscaled resolution.
+
+
+---
+
+
+TASK 4 — PARAGRAPH/REGION-LEVEL CAPTURE MODE:
+
+Add a new mode flag at the top of box3b.py:
+
+  CAPTURE_MODE = "full_page"  # or "region"
+
+
+When CAPTURE_MODE = "region":
+
+  - In detect_text_region_size(), instead of requiring the outer bounding box to 
+
+    fill the screen, detect the LARGEST DENSE TEXT CLUSTER (group of ≥3 bounding 
+
+    boxes within 80px vertical distance) and crop that region + 40px padding.
+
+  - Pass that cropped region to OCR instead of the full image.
+
+  - This directly addresses the font-size vs. distance trade-off since OCR sees 
+
+    a zoomed-in region of text, not the full A4 page from a distance.
+
+  - Overlay the selected region box in BLUE on the preview window so I can see 
+
+    what it will capture.
+
+
+---
+
+
+TASK 5 — OCR LANGUAGE CODE AUDIT:
+
+Search box3b.py for every call to ocr.predict() or PaddleOCR initialization.
+
+Confirm that lang parameter is correctly set for each supported language:
+
+  - Chinese: lang="ch" (not "zh" — PaddleOCR uses its own codes)
+
+  - French/Spanish/English: lang="en" is fine for Latin scripts
+
+  - If the lang is currently hardcoded to "en" for all, fix it so the language 
+
+    selected at startup (french/chinese/spanish/english) maps to the correct 
+
+    PaddleOCR lang code.
+
+
+
+
+TASK 6 — CAPTURE SPEED AND AUDIO GUIDANCE OVERHAUL:
+
+The current auto-capture loop in pipeline_cli_box3a.py has two critical 
+real-world failures observed during live testing:
+
+PROBLEM 1 — CAPTURE TAKES 10+ SECONDS:
+The stability gate (3 consecutive clean frames at 0.8s intervals) resets 
+completely on any single frame failure — a minor lighting flicker, brief 
+hand shift, or momentary QuadStd spike resets the counter to 0. In practice, 
+holding the page perfectly still still takes 10+ seconds to trigger because 
+the gate is too binary. Terminal logs confirm the gate was firing repeatedly 
+on QuadStd values of 30.1, 30.5, 30.9 — hovering just above threshold and 
+resetting the counter over and over. This is unacceptable for a wearable 
+assistive device.
+
+PROBLEM 2 — REAL-TIME AUDIO GUIDANCE IS COMPLETELY BROKEN:
+The "move closer" / "back up" audio guidance is non-functional in practice. 
+The user receives zero real-time audio feedback during the positioning phase. 
+The current TTS-based guidance is either silently dropped, delayed, or fires 
+at the wrong time. The user has to hold the page and guess for 10+ seconds 
+with no feedback on what is wrong — whether they are too far, too close, the 
+page is cut off, the lighting is bad, or they just need to hold still.
 
 Your task:
-1. Scan my local files to locate where this logic belongs.
-2. Modify the code to match these exact algorithmic specifications.
-3. Execute the script in the terminal to verify there are no syntax errors or socket crashes. Do not stop until the execution logs run cleanly.
+1. Redesign the stability gate mechanism so capture triggers reliably within 
+   3-4 seconds of the user holding the page in a good position, without being 
+   fragile to momentary frame noise.
+2. Design and implement a complete real-time non-blocking audio guidance system 
+   that gives the user distinct, meaningful feedback for each failure state 
+   (too far, too close, bad lighting, blurry, almost there). It must not use 
+   the blocking TTS queue. It must fire during the monitoring loop in real time.
+3. All changes go into pipeline_cli_box3b.py — do not touch pipeline_cli_box3a.py.
+4. Run python -m py_compile pipeline_cli_box3b.py to confirm no syntax errors.
+
+
+
+
+
+DELIVERABLES:
+
+1. Print the preprocessing sweep results table FIRST (before any code changes)
+
+2. Then produce pipeline_cli_box3b.py with Tasks 2, 3 (camera prints only, 
+
+   in piweb_cli.py note as comments since that runs on Pi), 4, and 5 applied
+
+3. Run: python -m py_compile pipeline_cli_box3b.py to confirm no syntax errors
+
+4. Summarize what changed vs. box3a and what accuracy improvement is expected
+
+
+Constraints:
+
+- All processing is local (no cloud APIs)
+
+- Do not break the existing socket protocol or TTS flow
+
+- Keep pipeline_cli_box3a.py completely untouched
+
+```
+
+
+---------------------------------------------------------------------------
+
+
+
+
+LIVE FEED PROMPTTT
+
+TASK 7 — LIVE RASPBERRY PI + CAMERA VALIDATION:
+
+After completing the offline preprocessing sweep, creating
+pipeline_cli_box3b.py, and confirming it compiles successfully, perform a
+controlled live hardware validation using the Raspberry Pi and Logitech C525.
+
+I will physically connect the Raspberry Pi and camera, position the camera, and
+present test pages when instructed. You must operate the available terminals,
+start the PC host and Raspberry Pi programs where accessible, monitor their
+output, inspect every saved capture, and guide me through the test one page at a
+time.
+
+Testing procedure:
+
+1. Before starting:
+   - Confirm pipeline_cli_box3a.py remains completely untouched.
+   - Confirm pipeline_cli_box3b.py passes:
+     python -m py_compile pipeline_cli_box3b.py
+   - Confirm the host and Raspberry Pi are reachable.
+   - Confirm the incoming/captured-image directory.
+   - Confirm the camera reports its actual accepted properties and negotiated
+     resolution.
+
+2. Ask me to position one test page at a time. Use a controlled test set:
+   - Flat, well-lit A4 page
+   - Slanted A4 page
+   - Page with the top portion farther from the camera
+   - Low-contrast or grey-paper page
+   - Close paragraph/region view
+   - Full-page view
+   - At least one English and one Chinese page, if available
+
+3. For every capture, record and report:
+   - Image filename and capture mode
+   - Full-frame Laplacian variance
+   - Top-30% ROI Laplacian variance
+   - Ratio: top-ROI LapVar / full-frame LapVar
+   - Whether the four-frame temporal-stability gate passed
+   - Whether the capture was accepted or rejected
+   - Which rejection condition triggered, if rejected
+   - Selected preprocessing variant
+   - OCR language code used
+   - OCR character count
+   - OCR output text
+   - Obvious OCR errors, especially in the first 4–5 lines
+   - Preprocessing, OCR, translation, TTS, and total pipeline latency
+   - Whether socket communication and TTS completed successfully
+
+4. Save diagnostic outputs for every accepted test:
+   - Original captured image
+   - Preprocessed image passed to OCR
+   - Image showing the top-30% ROI
+   - Preview/diagnostic image with detected boxes
+   - For region mode, an image with the selected dense-text cluster outlined
+     in BLUE and the final padded crop
+   - A text or CSV log containing all recorded metrics
+
+5. Test both:
+   CAPTURE_MODE = "full_page"
+   CAPTURE_MODE = "region"
+
+   Verify that region mode:
+   - Finds a cluster containing at least three text boxes
+   - Applies the 80-pixel vertical grouping rule
+   - Adds 40-pixel padding without exceeding image boundaries
+   - Sends only the selected crop to OCR
+   - Produces better small-text OCR when the full page is too far away
+
+6. During the measurement run, do not change thresholds or source code after
+   every individual image. First collect a consistent baseline across several
+   pages. Change only one parameter at a time after reviewing the baseline so
+   that the effect of each change can be measured.
+
+7. If a run fails:
+   - Diagnose whether the cause is camera capture, network/socket transport,
+     image saving, preprocessing, OCR, translation, or TTS.
+   - Preserve the existing socket protocol.
+   - Do not modify pipeline_cli_box3a.py.
+   - Do not hide or invent results.
+   - Clearly tell me what physical action is required from me.
+
+8. At the end, produce a comparison table covering all test cases and conclude:
+   - Whether the top-ROI gate correctly rejects soft page tops
+   - Whether four-frame stability reduces premature captures
+   - Whether the post-capture LapVar threshold of 150 is appropriate
+   - Whether neutral sharpness and manual exposure improve consistency
+   - Whether full-page or region mode gives better OCR for each scenario
+   - Whether the selected preprocessing variant remains the best on live images
+   - Any thresholds that should be recalibrated from the measured evidence
+
+Do not claim that the live validation passed unless you actually ran the
+programs and inspected the resulting images, OCR text, metrics, and terminal
+logs. If direct Raspberry Pi terminal access is unavailable, give me the exact
+command to run on the Pi, wait for me to paste the output, and continue the
+validation from that evidence.
+
+TASK 7  LIVE RASPBERRY PI + CAMERA VALIDATION:
+
+After completing the offline preprocessing sweep, creating
+pipeline_cli_box3b.py, and confirming it compiles successfully, perform a
+controlled live hardware validation using the Raspberry Pi and Logitech C525.
+
+I will physically connect the Raspberry Pi and camera, position the camera, and
+present test pages when instructed. You must operate the available terminals,
+start the PC host and Raspberry Pi programs where accessible, monitor their
+output, inspect every saved capture, and guide me through the test one page at a
+time.
+
+Create a NEW file named pipeline_cli_box3c.py as a direct copy of box3b to implement your modifications.
+Do NOT modify, edit, or overwrite pipeline_cli_box3b.py under any circumstances; keep it completely untouched.
+
+Testing procedure:
+
+1. Before starting:
+   - Confirm pipeline_cli_box3a.py remains completely untouched.
+   - Confirm pipeline_cli_box3b.py passes:
+     python -m py_compile pipeline_cli_box3b.py
+   - Confirm the host and Raspberry Pi are reachable.
+   - Confirm the incoming/captured-image directory.
+   - Confirm the camera reports its actual accepted properties and negotiated
+     resolution.
+
+2. Ask me to position one test page at a time. Use a controlled test set:
+   - Flat, well-lit A4 page
+   - Slanted A4 page
+   - Page with the top portion farther from the camera
+   - Low-contrast or grey-paper page
+   - Close paragraph/region view
+   - Full-page view
+   - At least one English and one Chinese page, if available
+
+3. For every capture, record and report:
+   - Image filename and capture mode
+   - Full-frame Laplacian variance
+   - Top-30% ROI Laplacian variance
+   - Ratio: top-ROI LapVar / full-frame LapVar
+   - Whether the four-frame temporal-stability gate passed
+   - Whether the capture was accepted or rejected
+   - Which rejection condition triggered, if rejected
+   - Selected preprocessing variant
+   - OCR language code used
+   - OCR character count
+   - OCR output text
+   - Obvious OCR errors, especially in the first 4–5 lines
+   - Preprocessing, OCR, translation, TTS, and total pipeline latency
+   - Whether socket communication and TTS completed successfully
+
+4. Save diagnostic outputs for every accepted test:
+   - Original captured image
+   - Preprocessed image passed to OCR
+   - Image showing the top-30% ROI
+   - Preview/diagnostic image with detected boxes
+   - For region mode, an image with the selected dense-text cluster outlined
+     in BLUE and the final padded crop
+   - A text or CSV log containing all recorded metrics
+
+5. Test both:
+   CAPTURE_MODE = "full_page"
+   CAPTURE_MODE = "region"
+
+   Verify that region mode:
+   - Finds a cluster containing at least three text boxes
+   - Applies the 80-pixel vertical grouping rule
+   - Adds 40-pixel padding without exceeding image boundaries
+   - Sends only the selected crop to OCR
+   - Produces better small-text OCR when the full page is too far away
+
+6. During the measurement run, do not change thresholds or source code after
+   every individual image. First collect a consistent baseline across several
+   pages. Change only one parameter at a time after reviewing the baseline so
+   that the effect of each change can be measured.
+
+7. If a run fails:
+   - Diagnose whether the cause is camera capture, network/socket transport,
+     image saving, preprocessing, OCR, translation, or TTS.
+   - Preserve the existing socket protocol.
+   - Do not modify pipeline_cli_box3a.py.
+   - Do not hide or invent results.
+   - Clearly tell me what physical action is required from me.
+
+8. At the end, produce a comparison table covering all test cases and conclude:
+   - Whether the top-ROI gate correctly rejects soft page tops
+   - Whether four-frame stability reduces premature captures
+   - Whether the post-capture LapVar threshold of 150 is appropriate
+   - Whether neutral sharpness and manual exposure improve consistency
+   - Whether full-page or region mode gives better OCR for each scenario
+   - Whether the selected preprocessing variant remains the best on live images
+   - Any thresholds that should be recalibrated from the measured evidence
+
+Do not claim that the live validation passed unless you actually ran the
+programs and inspected the resulting images, OCR text, metrics, and terminal
+logs. If direct Raspberry Pi terminal access is unavailable, give me the exact
+command to run on the Pi, wait for me to paste the output, and continue the
+validation from that evidence.
+Now execute all the tasks, run the terminal tests, and apply the final optimized code changes.
+Create a NEW file named pipeline_cli_box3c.py as a direct copy of box3b to implement your modifications.
+Do NOT modify, edit, or overwrite pipeline_cli_box3b.py under any circumstances; keep it completely untouched.
