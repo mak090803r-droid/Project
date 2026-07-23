@@ -44,35 +44,13 @@ def preprocess_optimized(img_path, cfg=CONFIG, save_debug=True):
         return None
 
     # Step 1: Immediately drop to Grayscale (1 Channel instead of 3)
-    # Everything below here now runs 3x faster and consumes 1/3 of the RAM
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Step 2: Denoise on the small grayscale layout
-    gray = cv2.GaussianBlur(gray, (3, 3), 0)
+    if save_debug:
+        cv2.imwrite("debug_preprocessed.jpg", gray)
+        print(f"[DEBUG] Saved grayscale image of shape {gray.shape[1]}x{gray.shape[0]} to debug_preprocessed.jpg")
 
-    # Step 3: Streamlined CLAHE (No LAB splitting or merging required!)
-    contrast = CLAHE_ENGINE.apply(gray)
-
-    # Step 4: Streamlined Gamma LUT mapping on a single channel
-    enhanced = cv2.LUT(contrast, GAMMA_LUT)
-
-    # Step 5: Sharpen edge transitions
-    if cfg["sharpen"]:
-        enhanced = cv2.filter2D(enhanced, -1, SHARPEN_KERNEL)
-
-    # Step 6: Upscale LAST (INTER_LINEAR is faster and smoother for deep learning)
-    h, w = enhanced.shape[:2]
-    final_img = cv2.resize(
-        enhanced,
-        (int(w * cfg["upscale_factor"]), int(h * cfg["upscale_factor"])),
-        interpolation=cv2.INTER_LINEAR
-    )
-
-    if True:
-        cv2.imwrite("debug_preprocessed.jpg", final_img)
-        print(f"[DEBUG] {w}x{h} → {final_img.shape[1]}x{final_img.shape[0]} (Single Channel)")
-
-    return final_img
+    return gray
 
 # ══════════════════════════════════════════════
 # MAIN RUNTIME
@@ -81,21 +59,22 @@ if __name__ == '__main__':
     start = time.time()
 
     ocr = PaddleOCR(
+        lang="en",
+        ocr_version="PP-OCRv6",
         use_doc_orientation_classify=False,
-        text_detection_model_name="PP-OCRv6_medium_det",
-        text_recognition_model_name="PP-OCRv6_medium_rec",
         use_doc_unwarping=False,
         use_textline_orientation=False,
-        engine="paddle",
-        enable_mkldnn=False
+        engine="onnxruntime",
+        device="gpu",
     )
-
     unwarper = None
     if CONFIG["book_mode"]:
         print("[INFO] Book Mode Active: Loading UVDoc Engine...")
         unwarper = TextImageUnwarping(model_name="UVDoc", engine="paddle")
 
-    img_path = "highres3.jpeg"
+    # Automatically resolve the correct path to the captured folder relative to the script
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    img_path = os.path.join(SCRIPT_DIR, "..", "pics", "captured", "capture_cli_001_20260716_211940.jpg").replace("\\", "/")
 
     if not os.path.exists(img_path):
         print(f"[ERROR] File not found: {img_path}")
@@ -110,11 +89,18 @@ if __name__ == '__main__':
             for res in unwarp_result:
                 unwarped_img = res['doctr_img']
             
+            # Save the raw unwrapped image for the user
+            raw_unwrapped_path = "unwrapped_page.jpg"
+            cv2.imwrite(raw_unwrapped_path, unwarped_img)
+            print(f"[INFO] Raw unwrapped image saved to: {raw_unwrapped_path}")
+            
             temp_path = "temp_unwarped.jpg"
             cv2.imwrite(temp_path, unwarped_img)
             
             processed = preprocess_optimized(temp_path, save_debug=True)
-            cv2.imwrite(temp_path, processed)
+            ocr_input_path = "temp_processed.jpg"
+            cv2.imwrite(ocr_input_path, processed)
+            temp_path = ocr_input_path # Set temp_path to ocr_input_path so ocr.predict(temp_path) runs on the processed image
         else:
             processed = preprocess_optimized(img_path, save_debug=True)
             temp_path = "temp_processed.jpg"

@@ -1,0 +1,27 @@
+[DEBUG] Recording this complete session in: C:\Users\ali\Desktop\FYDP\New\Project\1Pipeline\final\working\Ahead\Further Box AutoCapture\TEST\paragraph_test_outputs\live_debug_sessions\session_20260723_150426
+
+╔══════════════════════════════════════════════════════════════╗
+║   FYDP SMART GLASSES — BOX3D3 CLASSIFIED REGIONS          ║
+║          OCR → TRANSLATE (NLLB 1.3B) → SPEAK               ║
+║                                                              ║
+║  Controls:                                                   ║
+║      S  =  quality/capture; during TTS, stop playback       ║
+║      A  =  pause/resume document TTS                        ║
+║      Q  =  quit                                              ║
+║  Also works with S/Q on the Pi keyboard!                     ║
+║                                                              ║
+║  Fixes over box3d:                                           ║
+║      • Relaxed edge margin (1.5%) + % edge check             ║
+║      • Indent-based paragraph detection                      ║
+║      • Tighter gap ceiling for large fonts                   ║
+║      • Stability Hold: requires holding still for 1s         ║
+║      • Upscales 720p stream to 1.5x (1080p equivalent)       ║
+╚══════════════════════════════════════════════════════════════╝
+
+[INFO] Initializing audio subsystem …
+
+── Select source language ──
+  1) French
+  2) Chinese
+  3) Spanish
+  4) English (no translation, OCR + TTS only)
